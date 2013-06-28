@@ -5,22 +5,37 @@
 */
 
 import javax.swing.*;
+
+import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.awt.image.BufferedImage;
-import org.net.Msg.*;
-import org.net.p2p.*;
 
-public class frame extends JFrame implements MouseListener, MouseMotionListener, ActionListener, WindowListener{
+import org.net.Msg.*;
+import org.net.p2p.Msg;
+import org.net.p2p.*;
+import java.net.*;
+import java.io.*;
+
+public class frame extends JFrame implements MouseListener, MouseMotionListener, ActionListener, WindowListener, KeyListener{
 	public final static String versionNumber = "0.0";
 	private static int FRAMEWIDTH = 800;
 	private static int FRAMEHEIGHT = 600;
 	private int level = 1;
 	private ArrayList<Brick> bricks = new ArrayList<Brick>();
 	private ArrayList<Ball> balls = new ArrayList<Ball>();
+	private enum GameMode {CONNECT,PLAYING,SCORE};
+	private GameMode currentGameMode = GameMode.CONNECT;
+	private String myLocalIP = "";
+	private String myExternalIP = "";
 
 	public Timer drawTimer = new Timer();
 	private final static int DRAWDELAY = 33;
@@ -67,9 +82,33 @@ public class frame extends JFrame implements MouseListener, MouseMotionListener,
 
 	frame(){
 		super();
+
+//		Socket s = new Socket("www", 80);
+//		InetAddress current_addr = s.getLocalAddress();
+//		s.close();
+		
+//		if (current_addr instanceof Inet4Address)
+//			myLocalIP = current_addr.getHostAddress();
+//		else if (current_addr instanceof Inet6Address)
+//			myLocalIP = current_addr.getHostAddress();
+
+		try {
+			URL whatismyip = new URL("http://checkip.amazonaws.com/");
+			BufferedReader in;
+			in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
+			myExternalIP = in.readLine(); //you get the IP as a String
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	public void init(){
+//		startGame();
+		//have user input IP address of 2nd client
+	}
+
+	public void connected(Connection conn, Msg msg){
 		startGame();
 	}
 
@@ -109,13 +148,25 @@ public class frame extends JFrame implements MouseListener, MouseMotionListener,
 		BufferedImage image = new BufferedImage(FRAMEWIDTH, FRAMEHEIGHT, BufferedImage.TYPE_INT_RGB);
 		Graphics2D ig = image.createGraphics();
 
-		for(int i = 0; i < bricks.size(); i++){
-			Brick _brick = bricks.get(i);
-			ig.setColor(_brick.color);
-			ig.fillRect(_brick.x,_brick.y,_brick.width,_brick.height);
+		if(currentGameMode == GameMode.CONNECT){
+			ig.setFont(new Font("Arial", Font.PLAIN, 25));
+			ig.drawString("Other player's IP address: ",30,60);
+			ig.setFont(new Font("Arial", Font.PLAIN, 10));
+			ig.drawString("Your local IP (use this one if in the same building): " + myLocalIP,30,80);
+			ig.drawString("Your external IP (use if not in the same building): " + myExternalIP,30,95);
 		}
-		// Anti-aliasing
-		// ig.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		else if(currentGameMode == GameMode.PLAYING){
+			for(int i = 0; i < bricks.size(); i++){
+				Brick _brick = bricks.get(i);
+				ig.setColor(_brick.color);
+				ig.fillRect(_brick.x,_brick.y,_brick.width,_brick.height);
+			}
+			// Anti-aliasing
+			// ig.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		}
+		else if(currentGameMode == GameMode.SCORE){
+
+		}
 		g2d.drawImage(image, 0, 0, this);
 	}
 
@@ -192,5 +243,23 @@ public class frame extends JFrame implements MouseListener, MouseMotionListener,
 	@Override
 	public void windowOpened(WindowEvent e){
 
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
 	}
 }
